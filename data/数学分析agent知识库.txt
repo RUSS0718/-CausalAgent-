@@ -1,0 +1,272 @@
+data-analysis-knowledge-base/
+
+01_analysis_frameworks/
+    AARRR.md
+    OSM.md
+    Growth_Analysis.md
+    Business_Analysis_Frameworks.md
+
+02_statistics/
+    probability.md
+    hypothesis_testing.md
+    regression.md
+    ab_testing.md
+    sampling.md
+
+03_data_analysis_methods/
+    exploratory_data_analysis.md
+    cohort_analysis.md
+    funnel_analysis.md
+    retention_analysis.md
+    segmentation.md
+    time_series_analysis.md
+
+04_sql_knowledge/
+    sql_basics.md
+    sql_analytics.md
+    window_functions.md
+    performance_optimization.md
+
+05_python_analysis/
+    pandas_guide.md
+    numpy_guide.md
+    visualization.md
+    data_cleaning.md
+
+06_business_metrics/
+    ecommerce_metrics.md
+    saas_metrics.md
+    marketing_metrics.md
+    product_metrics.md
+    finance_metrics.md
+
+07_data_visualization/
+    visualization_principles.md
+    dashboard_design.md
+    storytelling_with_data.md
+
+08_machine_learning_for_analysis/
+    clustering.md
+    classification.md
+    regression_models.md
+    anomaly_detection.md
+
+09_data_quality/
+    data_cleaning.md
+    missing_data.md
+    outlier_detection.md
+    data_validation.md
+
+10_analysis_playbooks/
+    user_growth_analysis.md
+    churn_analysis.md
+    revenue_analysis.md
+    marketing_roi_analysis.md
+
+    EDA目标:
+理解数据结构、分布、异常、关系
+
+主要步骤:
+1 数据概览
+    - shape
+    - data types
+    - missing values
+
+2 单变量分析
+    - 分布
+    - 均值/中位数
+    - 偏度/峰度
+
+3 双变量分析
+    - correlation
+    - scatter plots
+    - group comparison
+
+4 多变量分析
+    - correlation matrix
+    - clustering
+    - PCA
+
+常用图表
+- histogram
+- boxplot
+- scatterplot
+- heatmap
+
+
+步骤:
+
+1 提出假设
+H0: 原假设
+H1: 备择假设
+
+2 选择检验方法
+- t-test
+- chi-square
+- ANOVA
+
+3 设置显著性水平
+α = 0.05
+
+4 计算统计量
+
+5 判断p-value
+
+结论:
+p < α -> 拒绝H0
+p >= α -> 不拒绝H0
+
+
+核心指标
+- 转化率
+- 点击率
+- 留存率
+- 收入
+
+流程
+
+1 确定目标指标
+2 随机分组
+3 运行实验
+4 统计显著性
+5 得出结论
+
+常见问题
+- 样本量不足
+- 多重检验
+- 实验污染
+
+
+SELECT
+    signup_date,
+    activity_date,
+    COUNT(DISTINCT user_id)
+FROM user_activity
+GROUP BY signup_date, activity_date
+
+
+SELECT
+step,
+COUNT(DISTINCT user_id)
+FROM funnel_events
+GROUP BY step
+
+
+SELECT
+cohort_month,
+months_since_signup,
+COUNT(DISTINCT user_id)
+FROM cohort_table
+GROUP BY 1,2
+
+MRR
+Monthly Recurring Revenue
+
+ARPU
+Average Revenue Per User
+
+Churn Rate
+流失率
+
+LTV
+客户生命周期价值
+
+CAC
+客户获取成本
+
+LTV / CAC > 3 为健康
+
+GMV
+成交总额
+
+AOV
+客单价
+
+Conversion Rate
+转化率
+
+Repeat Purchase Rate
+复购率
+
+Cart Abandonment
+弃购率
+
+常见问题
+
+1 Missing values
+处理方法
+- 删除
+- 均值填充
+- 模型填充
+
+2 Outliers
+检测
+- Z-score
+- IQR
+
+3 Duplicate data
+- drop duplicates
+
+4 类型错误
+- string -> datetime
+- string -> numeric
+
+
+图表选择
+
+趋势
+-> 折线图
+
+分布
+-> 直方图
+
+关系
+-> 散点图
+
+组成
+-> 堆叠柱状图
+
+对比
+-> 柱状图
+
+步骤
+
+1 新用户趋势
+2 获客渠道分析
+3 转化漏斗
+4 留存率
+5 用户生命周期
+
+输出
+- 增长瓶颈
+- 最优渠道
+- 改进建议
+
+步骤
+
+1 定义流失
+2 cohort留存
+3 行为差异
+4 关键因素
+
+方法
+- logistic regression
+- survival analysis
+
+
+数据分析Agent原则
+
+1 永远先理解数据结构
+2 不直接得出结论
+3 先做EDA
+4 再做统计检验
+5 最后给商业建议
+
+输出结构
+
+1 数据理解
+2 分析方法
+3 结果
+4 可视化建议
+5 商业结论
+
