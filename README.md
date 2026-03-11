@@ -35,5 +35,6 @@ pip install -r requirements.txt
 - 输入：`[(x, y), ...]` 或 JSON 字符串 / 文本中的 `(x,y)` 序列
 - 计算：使用 `numpy.linalg.lstsq` 做最小二乘线性拟合（不依赖 scikit-learn）
 - 输出：线性方程、预测的下一个 `x` 与对应 `y`（JSON 字符串）
+- 额外产物：拟合图将保存到 `在线服务rag/artifacts/` 并返回 `plot_path`
 
 `RagService` 在生成回答前会尝试从用户输入抽取 `(x,y)` 数据，若成功会调用 `calculate` 并把结果注入 Prompt，形成“RAG + 工具计算”的组合回答。
