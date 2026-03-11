@@ -11,7 +11,7 @@ from langchain_core.runnables import RunnablePassthrough, RunnableLambda
 from langchain_core.documents import Document
 from langchain_core.runnables.history import RunnableWithMessageHistory
 
-from tools import maybe_calculate_from_text
+from tools import maybe_calculate_from_text, maybe_call_mcp_tool
 
 
 class RagService(object):
@@ -28,9 +28,11 @@ class RagService(object):
                 (
                     "system",
                     "你是智能助手cil,是一名进行数据分析的智能体助手。"
-                    "以我提供的已知参考资料为主，简洁和专业的回答用户问题。"
+                    "以我提供的已知参考资料为主，简洁和专业地回答用户问题。"
                     "参考资料:{context}。"
-                    "如果存在工具计算结果，请优先结合工具计算结果回答：{tool_result}。若结果中包含plot_path，请在回答中提示用户可查看该图片。"
+                    "本地工具计算结果:{tool_result}。"
+                    "MCP工具调用结果:{mcp_result}。"
+                    "若结果中包含plot_path，请在回答中提示用户可查看该图片。"
                     "请你每次回答用户问题用'你好我是您的数据分析助手cil'为开头，"
                     "你的输出格式请严格使用JSON",
                 ),
@@ -61,8 +63,11 @@ class RagService(object):
         def dict2str(value: dict) -> str:
             return value["input"]
 
-        def maybe_tool(value: dict) -> str:
+        def maybe_local_tool(value: dict) -> str:
             return maybe_calculate_from_text(value["input"])
+
+        def maybe_mcp_tool(value: dict) -> str:
+            return maybe_call_mcp_tool(value["input"])
 
         def new_dict(value):
             return {
@@ -70,13 +75,15 @@ class RagService(object):
                 "context": value["context"],
                 "history": value["input"]["history"],
                 "tool_result": value["tool_result"] or "无",
+                "mcp_result": value["mcp_result"] or "无",
             }
 
         chain = (
             {
                 "input": RunnablePassthrough(),
                 "context": RunnableLambda(dict2str) | retriever | format_document,
-                "tool_result": RunnableLambda(maybe_tool),
+                "tool_result": RunnableLambda(maybe_local_tool),
+                "mcp_result": RunnableLambda(maybe_mcp_tool),
             }
             | RunnableLambda(new_dict)
             | self.prompt_template

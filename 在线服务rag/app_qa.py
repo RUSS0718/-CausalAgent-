@@ -1,11 +1,15 @@
-import time
 from rag import RagService
 import streamlit as st
 import config_data4rag as config
-#依旧conda里streamlit run启动
-# 标题
+
 st.title("智能客服")
-st.divider()  # 分隔符
+st.divider()
+
+with st.sidebar:
+    st.markdown("### Tool / MCP 使用说明")
+    st.caption("趋势拟合: 在消息中输入如 `(1,450),(2,470),(3,485)` 会自动触发 calculate 工具")
+    st.caption("MCP调用: 输入 `/mcp <tool_name> {json参数}`，例如 `/mcp ping {\"name\":\"cil\"}`")
+    st.caption(f"MCP enabled: {config.mcp_enabled}, transport: {config.mcp_transport}")
 
 if "message" not in st.session_state:
     st.session_state["message"] = [{"role": "assistant", "content": "你好，有什么可以帮助你？"}]
@@ -16,11 +20,9 @@ if "rag" not in st.session_state:
 for message in st.session_state["message"]:
     st.chat_message(message["role"]).write(message["content"])
 
-# 在页面最下方提供用户输入栏
 prompt = st.chat_input()
 
 if prompt:
-    # 在页面输出用户的提问
     st.chat_message("user").write(prompt)
     st.session_state["message"].append({"role": "user", "content": prompt})
 

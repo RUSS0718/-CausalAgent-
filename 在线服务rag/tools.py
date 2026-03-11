@@ -7,17 +7,19 @@ from typing import Any
 import numpy as np
 from langchain_core.tools import tool
 
+import config_data4rag as config
+from mcp_client import MCPClient, MCPClientError
+
 try:
     import matplotlib.pyplot as plt
-except Exception:  # matplotlib在部分环境可能不可用
+except Exception:
     plt = None
 
-
 POINT_PATTERN = re.compile(r"\((-?\d+(?:\.\d+)?),\s*(-?\d+(?:\.\d+)?)\)")
+MCP_CALL_PATTERN = re.compile(r"^\s*/mcp\s+([a-zA-Z0-9_\-\.]+)\s*(\{.*\})?\s*$", re.S)
 
 
 def _normalize_points(data_points: Any) -> list[tuple[float, float]]:
-    """将输入归一化为[(x, y), ...]格式，支持JSON字符串或Python列表。"""
     parsed: Any = data_points
     if isinstance(data_points, str):
         data_points = data_points.strip()
@@ -39,31 +41,25 @@ def _normalize_points(data_points: Any) -> list[tuple[float, float]]:
         x, y = float(point[0]), float(point[1])
         points.append((x, y))
 
-    unique_x = {p[0] for p in points}
-    if len(unique_x) < 2:
+    if len({p[0] for p in points}) < 2:
         raise ValueError("x值需要至少两个不同取值，否则无法拟合直线")
 
     return points
 
 
 def _fit_line(points: list[tuple[float, float]]) -> tuple[float, float, float, float]:
-    """最小二乘拟合 y = wx + b，并预测下一个x点。"""
     x = np.array([p[0] for p in points], dtype=float)
     y = np.array([p[1] for p in points], dtype=float)
-
     x_matrix = np.vstack([x, np.ones(len(x))]).T
     w, b = np.linalg.lstsq(x_matrix, y, rcond=None)[0]
-
     next_x = float(max(x) + 1)
     pred_y = float(w * next_x + b)
     return float(w), float(b), next_x, pred_y
 
 
 def _save_plot(points: list[tuple[float, float]], w: float, b: float, next_x: float, pred_y: float) -> str:
-    """保存拟合图，返回本地路径；如当前环境无matplotlib则返回空字符串。"""
     if plt is None:
         return ""
-
     output_dir = os.path.join("在线服务rag", "artifacts")
     os.makedirs(output_dir, exist_ok=True)
     output_path = os.path.join(output_dir, f"trend_{datetime.now().strftime('%Y%m%d_%H%M%S_%f')}.png")
@@ -91,11 +87,9 @@ def _save_plot(points: list[tuple[float, float]], w: float, b: float, next_x: fl
 
 @tool("calculate", return_direct=False)
 def calculate(data_points: Any) -> str:
-    """对二维数据点做最小二乘线性拟合，预测下一个x的y值，并输出拟合图路径。"""
     points = _normalize_points(data_points)
     w, b, next_x, pred_y = _fit_line(points)
     plot_path = _save_plot(points, w, b, next_x, pred_y)
-
     return json.dumps(
         {
             "tool": "calculate",
@@ -111,9 +105,45 @@ def calculate(data_points: Any) -> str:
 
 
 def maybe_calculate_from_text(text: str) -> str:
-    """从用户文本中尝试提取(x, y)序列，成功则返回工具结果。"""
     pairs = POINT_PATTERN.findall(text)
     if len(pairs) < 2:
         return ""
     tool_input = [[float(x), float(y)] for x, y in pairs]
     return calculate.invoke({"data_points": tool_input})
+
+
+def maybe_call_mcp_tool(text: str) -> str:
+    """支持输入: /mcp <tool_name> {json_args}"""
+    if not config.mcp_enabled or config.mcp_transport != "stdio":
+        return ""
+
+    match = MCP_CALL_PATTERN.match(text)
+    if not match:
+        return ""
+
+    tool_name = match.group(1)
+    args_text = match.group(2) or "{}"
+    try:
+        arguments = json.loads(args_text)
+    except json.JSONDecodeError as exc:
+        return json.dumps({"tool": "mcp", "ok": False, "error": f"参数JSON解析失败: {exc}"}, ensure_ascii=False)
+
+    try:
+        client = MCPClient(config.mcp_server_cmd, config.mcp_timeout)
+        client.initialize()
+        result = client.call_tool(tool_name, arguments)
+        tools = client.list_tools()
+        client.close()
+        return json.dumps(
+            {
+                "tool": "mcp",
+                "ok": True,
+                "called": tool_name,
+                "arguments": arguments,
+                "result": result,
+                "tool_count": len(tools),
+            },
+            ensure_ascii=False,
+        )
+    except MCPClientError as exc:
+        return json.dumps({"tool": "mcp", "ok": False, "called": tool_name, "error": str(exc)}, ensure_ascii=False)

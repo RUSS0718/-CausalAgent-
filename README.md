@@ -38,3 +38,22 @@ pip install -r requirements.txt
 - 额外产物：拟合图将保存到 `在线服务rag/artifacts/` 并返回 `plot_path`
 
 `RagService` 在生成回答前会尝试从用户输入抽取 `(x,y)` 数据，若成功会调用 `calculate` 并把结果注入 Prompt，形成“RAG + 工具计算”的组合回答。
+
+
+## 四、MCP（Model Context Protocol）补充
+当前已补充一个可用的 MCP 客户端层（stdio 方式），用于在对话中按命令触发远程工具：
+
+- 新增 `在线服务rag/mcp_client.py`：实现 `initialize / tools/list / tools/call`。
+- 在聊天中输入：`/mcp <tool_name> {json参数}`，即可尝试调用 MCP Tool。
+- `RagService` 会把 MCP 返回结果注入到提示词中的 `mcp_result` 字段。
+
+### 环境变量配置示例
+```bash
+export DASHSCOPE_API_KEY="你的key"
+export MCP_ENABLED=true
+export MCP_TRANSPORT=stdio
+export MCP_SERVER_CMD="python your_mcp_server.py"
+export MCP_TIMEOUT=15
+```
+
+> 说明：目前 MCP 入口为命令触发式（`/mcp ...`），是“先可用”的实现；后续可继续升级为由模型自动选择 MCP 工具。
